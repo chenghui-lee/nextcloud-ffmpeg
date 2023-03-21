@@ -1,0 +1,29 @@
+name: containerize
+on:
+  workflow_dispatch:
+
+jobs:
+  quay:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build Image
+      id: build-image-quay
+      uses: redhat-actions/buildah-build@v2
+      with:
+        image: nextcloud-ffmpeg
+        tags: latest
+        containerfiles: |
+          ./Dockerfile
+
+    - name: Push To quay.io
+      id: push-to-quay
+      uses: redhat-actions/push-to-registry@v2
+      with:
+        image: ${{ steps.build-image-quay.outputs.image }}
+        tags: ${{ steps.build-image-quay.outputs.tags }}
+        registry: quay.io/${{ secrets.QUAY_USERNAME }}
+        username: ${{ secrets.QUAY_ROBOT_ACCOUNT }}
+        password: ${{ secrets.QUAY_TOKEN }}
